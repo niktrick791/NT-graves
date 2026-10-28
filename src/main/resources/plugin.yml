@@ -1,0 +1,35 @@
+name: niktrick-graves
+version: '${version}'
+main: de.niktr.graves.NiktrickGravesPlugin
+api-version: '1.21'
+author: niktr
+description: Modern death chests & graves system with holograms, timeout protection, inventory restore and admin GUI.
+
+commands:
+  graves:
+    description: Verwalte Gräber und Totenkisten
+    usage: /graves [help|list|tp|admin|history|restore|reload]
+    aliases: [grave, todestruhe, todeschest, gravesadmin]
+
+permissions:
+  niktrick.graves.use:
+    description: Erlaubt normale Grab-Interaktionen
+    default: true
+  niktrick.graves.list:
+    description: Erlaubt das Anzeigen eigener Gräber
+    default: true
+  niktrick.graves.tp:
+    description: Erlaubt die Teleportation zu Gräbern
+    default: op
+  niktrick.graves.admin:
+    description: Erlaubt das Verwalten aller Gräber, Einstellungen und Historie
+    default: op
+  niktrick.graves.restore:
+    description: Erlaubt das Wiederherstellen abgelaufener Gräber
+    default: op
+  niktrick.graves.reload:
+    description: Erlaubt das Neuladen der Konfiguration
+    default: op
+  niktrick.graves.bypass:
+    description: Umgeht das Grablauf-Limit
+    default: op

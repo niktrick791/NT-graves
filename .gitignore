@@ -1,0 +1,12 @@
+.gradle/
+build/
+bin/
+.idea/
+*.iml
+out/
+.DS_Store
+*.env
+.env*
+*.key
+*.pem
+*.jar

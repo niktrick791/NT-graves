@@ -1,0 +1,43 @@
+hologram:
+  - "<gradient:#FF5555:#FFAA00><b>%player%'s Grave</b></gradient>"
+  - "&#00CC00⌛ &#00FF00%despawn-time% &#00CC00⌛"
+  - "&#00AAFF%item% &fItems &8| &#00AAFF%xp% &fXP"
+
+help:
+  - " "
+  - "<gradient:#FF5555:#FFAA00><b>BorderMC Gräber</b></gradient> <#FFAA00>Hilfe"
+  - " <#FFAA00>➤ <white>/graves reload <#DDDDDD>| <#FFAAFF>Modul neu laden"
+  - " <#FFAA00>➤ <white>/graves list <#DDDDDD>| <#FFAAFF>Aktive Gräber auflisten"
+  - " <#FFAA00>➤ <white>/graves tp <#DDDDDD>| <#FFAAFF>Zum eigenen Grab teleportieren"
+  - " <#FFAA00>➤ <white>/graves admin <#DDDDDD>| <#FFAAFF>Admin-Verwaltung & Einstellungen öffnen"
+  - " <#FFAA00>➤ <white>/graves history <#DDDDDD>| <#FFAAFF>Archivierte Gräber anzeigen"
+  - " <#FFAA00>➤ <white>/graves restore <Spieler|ID> <#DDDDDD>| <#FFAAFF>Grab wiederherstellen"
+  - " "
+
+gui-name: "&0Grab von %player%"
+
+# if you restart the server, sometimes the server can't find the owner's name, this will be used for it
+unknown-player: "Unbekannt"
+
+reload:
+  success: "&#33FF33Gräber-Modul erfolgreich neu geladen!"
+  failed: "&#FF3333Fehler beim Neuladen des Moduls! Überprüfe die &f%file%&#FF3333 Datei auf Fehler!"
+
+interact:
+  not-your-grave: "&#FFAAFFDu kannst nur dein eigenes Grab öffnen!"
+
+death-message:
+  enabled: false
+  message: "&#FFAAAADu bist gestorben bei &f%world% %x%, %y%, %z%&#FFAAAA!"
+
+grave-list:
+  header: "&#FFAA00&l=== GRÄBER ==="
+  grave: "&#FFAA00[TP] &#FFAAFF%player% &7- &#FFAAFF%world% %x%, %y%, %z% &7(%time%)"
+  no-graves: "&#FFAAFFKeine Gräber gefunden!"
+
+commands:
+  invalid-value: "&#FF0000Ungültiger Parameter: &#BB0000%value%"
+  invalid-command: "&#FF0000Ungültiger Befehl oder Unterbefehl!"
+  missing-argument: "&#FF0000Fehlendes Argument! Bitte gib einen Wert an für &#BB0000%value%&#FF0000."
+  no-permission: "&#FF0000Du hast keine Berechtigung für diesen Befehl!"
+  out-of-range: "&#FF0000Der Wert &#BB0000%number% &#FF0000muss zwischen &#BB0000%min% &#FF0000und &#BB0000%max%&#FF0000 liegen!"
