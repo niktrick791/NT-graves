@@ -38,7 +38,7 @@ tasks.processResources {
 }
 
 tasks.jar {
-    archiveBaseName.set("niktrick-graves")
+    archiveBaseName.set("NT-graves")
     archiveClassifier.set("")
     archiveVersion.set("1.0.0")
 }

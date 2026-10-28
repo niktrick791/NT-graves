@@ -146,7 +146,7 @@ public class GravesCommand implements CommandExecutor, TabCompleter {
 
     private void sendHelp(CommandSender sender) {
         if (config.isDe()) {
-            sender.sendMessage(GravesConfig.parseColor("&6&lniktrick-graves &8• &eHilfe"));
+            sender.sendMessage(GravesConfig.parseColor("&6&lNT-graves &8• &eHilfe"));
             sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves list &8| &bListet deine Gräber auf"));
             sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves claim &8| &bSammelt dein Grab-Inventar ein"));
             sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves open &8| &bÖffnet dein Grab-Inventar"));
@@ -159,7 +159,7 @@ public class GravesCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves lang <de|en> &8| &bSprache ändern (Global)"));
             }
         } else {
-            sender.sendMessage(GravesConfig.parseColor("&6&lniktrick-graves &8• &eHelp"));
+            sender.sendMessage(GravesConfig.parseColor("&6&lNT-graves &8• &eHelp"));
             sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves list &8| &bLists your active graves"));
             sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves claim &8| &bCollects your grave inventory"));
             sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves open &8| &bOpens your grave inventory"));

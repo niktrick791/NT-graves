@@ -1,4 +1,4 @@
-name: niktrick-graves
+name: NT-graves
 version: '${version}'
 main: de.niktr.graves.NiktrickGravesPlugin
 author: niktr

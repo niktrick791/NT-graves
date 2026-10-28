@@ -1,1 +1,1 @@
-rootProject.name = "niktrick-graves"
+rootProject.name = "NT-graves"

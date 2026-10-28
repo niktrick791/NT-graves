@@ -1,5 +1,5 @@
 # ======================================================
-#            niktrick-graves Configuration
+#            NT-graves Configuration
 # Universal Support: Minecraft 1.8.8 to 1.21.4+
 # ======================================================
 
@@ -7,7 +7,7 @@
 # Can also be changed in-game with /graves lang <de|en>
 language: "en"
 
-prefix: "&8[&6niktrick-graves&8] &7"
+prefix: "&8[&6NT-graves&8] &7"
 
 # how fast should the graves disappear
 # set to -1 to make graves never despawn
