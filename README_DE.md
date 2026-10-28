@@ -6,7 +6,6 @@
 [![Minecraft: 1.8.8 - 1.21.4+](https://img.shields.io/badge/Minecraft-1.8.8--1.21.4%2B-brightgreen.svg)](#)
 [![Java: 8+](https://img.shields.io/badge/Java-8%2B-red.svg)](#)
 [![Donate with PayPal](https://img.shields.io/badge/Donate-PayPal-00457C.svg?logo=paypal&logoColor=white)](https://paypal.me/niktrick)
-[![Support on Ko-fi](https://img.shields.io/badge/Support-Ko--fi-FF5E5B.svg?logo=kofi&logoColor=white)](https://ko-fi.com/niktrick)
 
 [🇬🇧 Switch to English Version](README.md) | [🇩🇪 Deutsche Version](README_DE.md)
 
@@ -100,5 +99,4 @@ save-graves:
 
 Wenn dir dieses Plugin gefällt, freuen wir uns über deine freiwillige Unterstützung:
 - [PayPal Spende](https://paypal.me/niktrick)
-- [Ko-fi Support](https://ko-fi.com/niktrick)
 - Alle Spenden sind freiwillig und fließen direkt in die Wartung und Weiterentwicklung!
