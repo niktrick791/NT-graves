@@ -1,7 +1,5 @@
 package de.niktr.graves.util;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -11,18 +9,20 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 
 public abstract class Menu<P extends Plugin> implements InventoryHolder {
+
+    public interface ClickAction {
+        void execute(InventoryClickEvent event);
+    }
 
     protected final P plugin;
     protected final Player player;
     protected final Menu<?> parent;
-    protected final Map<Integer, Consumer<InventoryClickEvent>> actions = new HashMap<>();
+    protected final Map<Integer, ClickAction> actions = new HashMap<Integer, ClickAction>();
     protected Inventory inventory;
 
     protected Menu(P plugin, Player player) {
@@ -39,7 +39,7 @@ public abstract class Menu<P extends Plugin> implements InventoryHolder {
         return plugin;
     }
 
-    public abstract Component title();
+    public abstract String title();
 
     public abstract int size();
 
@@ -62,16 +62,21 @@ public abstract class Menu<P extends Plugin> implements InventoryHolder {
     }
 
     public void handle(InventoryClickEvent event) {
-        Consumer<InventoryClickEvent> action = actions.get(event.getRawSlot());
+        ClickAction action = actions.get(event.getRawSlot());
         if (action == null) return;
-        action.accept(event);
+        action.execute(event);
     }
 
     public void handleDrag(org.bukkit.event.inventory.InventoryDragEvent event) {
     }
 
-    public void openLater(Menu<?> menu) {
-        Bukkit.getScheduler().runTask(plugin, menu::open);
+    public void openLater(final Menu<?> menu) {
+        Bukkit.getScheduler().runTask(plugin, new Runnable() {
+            @Override
+            public void run() {
+                menu.open();
+            }
+        });
     }
 
     public void back() {
@@ -83,59 +88,49 @@ public abstract class Menu<P extends Plugin> implements InventoryHolder {
     }
 
     public void close() {
-        Bukkit.getScheduler().runTask(plugin, () -> player.closeInventory());
+        Bukkit.getScheduler().runTask(plugin, new Runnable() {
+            @Override
+            public void run() {
+                player.closeInventory();
+            }
+        });
     }
 
     public void onClose(InventoryCloseEvent event) {
     }
 
     @Override
-    public @NotNull Inventory getInventory() {
+    public Inventory getInventory() {
         if (inventory == null) {
-            inventory = Bukkit.createInventory(this, size(), title());
+            inventory = Bukkit.createInventory(this, size(), XGraveVersion.colorize(title()));
         }
         return inventory;
     }
 
     protected void set(int slot, ItemStack item) {
-        set(slot, item, null);
+        if (slot >= 0 && slot < size()) {
+            getInventory().setItem(slot, item);
+        }
     }
 
-    protected void set(int slot, ItemStack item, Consumer<InventoryClickEvent> action) {
-        if (slot < 0 || slot >= size()) return;
-        getInventory().setItem(slot, item);
+    protected void set(int slot, ItemStack item, ClickAction action) {
+        set(slot, item);
         if (action != null) {
             actions.put(slot, action);
-        } else {
-            actions.remove(slot);
         }
     }
 
-    protected ItemStack filler() {
-        return new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).name(Component.empty()).build();
-    }
-
-    protected void fillEmpty() {
-        Inventory inv = getInventory();
-        ItemStack filler = filler();
-        for (int slot = 0; slot < inv.getSize(); slot++) {
-            if (inv.getItem(slot) == null) inv.setItem(slot, filler);
+    protected void buildFrame() {
+        ItemStack filler = XGraveVersion.createPane(7, "GRAY_STAINED_GLASS_PANE");
+        for (int i = 0; i < size(); i++) {
+            if (i < 9 || i >= size() - 9 || i % 9 == 0 || (i + 1) % 9 == 0) {
+                set(i, new ItemBuilder(filler).name(" ").build(), new ClickAction() {
+                    @Override
+                    public void execute(InventoryClickEvent e) {
+                        e.setCancelled(true);
+                    }
+                });
+            }
         }
-    }
-
-    protected ItemStack backItem() {
-        return new ItemBuilder(Material.ARROW).name(Component.text("« Zurück", NamedTextColor.YELLOW)).build();
-    }
-
-    protected ItemStack closeItem() {
-        return new ItemBuilder(Material.BARRIER).name(Component.text("✕ Schließen", NamedTextColor.RED)).build();
-    }
-
-    protected void setBack(int slot) {
-        set(slot, backItem(), event -> back());
-    }
-
-    protected void setClose(int slot) {
-        set(slot, closeItem(), event -> close());
     }
 }

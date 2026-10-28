@@ -1,8 +1,6 @@
 package de.niktr.graves.config;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import de.niktr.graves.util.XGraveVersion;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -13,14 +11,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class GravesConfig {
-
-    private static final Pattern HEX_AMP_PATTERN = Pattern.compile("&#([0-9a-fA-F]{6})");
-    private static final MiniMessage MM = MiniMessage.miniMessage();
-    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
 
     private final Plugin plugin;
     private final File configFile;
@@ -31,7 +23,7 @@ public class GravesConfig {
 
     // Config options
     private String prefixRaw;
-    private Component prefixComponent;
+    private String prefixComponent;
     private int despawnTimeSeconds;
     private boolean dropItems;
     private boolean droppedItemVelocity;
@@ -227,58 +219,12 @@ public class GravesConfig {
         }
     }
 
-    public static Component parseColor(String input) {
-        if (input == null || input.isEmpty()) return Component.empty();
-
-        // 1. Convert &#RRGGBB to <#RRGGBB>
-        Matcher hexMatcher = HEX_AMP_PATTERN.matcher(input);
-        StringBuffer sb = new StringBuffer();
-        while (hexMatcher.find()) {
-            hexMatcher.appendReplacement(sb, "<#" + hexMatcher.group(1) + ">");
-        }
-        hexMatcher.appendTail(sb);
-        String text = sb.toString();
-
-        // 2. Check if MiniMessage syntax is used (tags with <...>)
-        if (text.contains("<") && text.contains(">")) {
-            text = convertLegacyToMiniMessage(text);
-            try {
-                return MM.deserialize(text);
-            } catch (Exception ignored) {
-            }
-        }
-
-        return LEGACY.deserialize(text);
+    public static String parseColor(String input) {
+        if (input == null || input.isEmpty()) return "";
+        return XGraveVersion.colorize(input);
     }
 
-    public static String convertLegacyToMiniMessage(String input) {
-        if (input == null) return "";
-        return input
-                .replace("&0", "<black>")
-                .replace("&1", "<dark_blue>")
-                .replace("&2", "<dark_green>")
-                .replace("&3", "<dark_aqua>")
-                .replace("&4", "<dark_red>")
-                .replace("&5", "<dark_purple>")
-                .replace("&6", "<gold>")
-                .replace("&7", "<gray>")
-                .replace("&8", "<dark_gray>")
-                .replace("&9", "<blue>")
-                .replace("&a", "<green>")
-                .replace("&b", "<aqua>")
-                .replace("&c", "<red>")
-                .replace("&d", "<light_purple>")
-                .replace("&e", "<yellow>")
-                .replace("&f", "<white>")
-                .replace("&k", "<obfuscated>")
-                .replace("&l", "<bold>")
-                .replace("&m", "<strikethrough>")
-                .replace("&n", "<underlined>")
-                .replace("&o", "<italic>")
-                .replace("&r", "<reset>");
-    }
-
-    public Component getPrefix() {
+    public String getPrefix() {
         return prefixComponent;
     }
 

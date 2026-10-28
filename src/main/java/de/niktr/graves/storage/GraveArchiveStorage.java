@@ -128,7 +128,7 @@ public class GraveArchiveStorage {
         }
 
         ItemStack[] items = GraveStorage.itemsFromBase64(data.getItems());
-        var inv = player.getInventory();
+        org.bukkit.inventory.PlayerInventory inv = player.getInventory();
 
         // 0. Remove any Shulker Head on player
         if (de.niktr.graves.manager.GraveManager.isShulkerHead(inv.getHelmet())) {
@@ -138,7 +138,7 @@ public class GraveArchiveStorage {
         // 1. Auto-equip armor
         for (int i = 0; i < items.length; i++) {
             ItemStack is = items[i];
-            if (is == null || is.getType().isAir()) continue;
+            if (de.niktr.graves.util.XGraveVersion.isAir(is)) continue;
 
             if (de.niktr.graves.manager.GraveManager.isShulkerHead(is)) {
                 items[i] = null;
@@ -164,7 +164,7 @@ public class GraveArchiveStorage {
         // 2. Add remaining items
         for (int i = 0; i < items.length; i++) {
             ItemStack is = items[i];
-            if (is == null || is.getType().isAir()) continue;
+            if (de.niktr.graves.util.XGraveVersion.isAir(is)) continue;
             if (de.niktr.graves.manager.GraveManager.isShulkerHead(is)) continue;
 
             HashMap<Integer, ItemStack> leftover = inv.addItem(is);

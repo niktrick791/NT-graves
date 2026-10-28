@@ -3,6 +3,7 @@ package de.niktr.graves.listeners;
 import de.niktr.graves.config.GravesConfig;
 import de.niktr.graves.manager.GraveManager;
 import de.niktr.graves.model.Grave;
+import de.niktr.graves.util.XGraveVersion;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -108,10 +109,10 @@ public class GraveDeathListener implements Listener {
             }
 
             // Filter out any accidentally picked up grave skull / shulker head
-            graveItems.removeIf(is -> is.getType() == Material.PLAYER_HEAD &&
+            graveItems.removeIf(is -> is.getType() == XGraveVersion.SKULL_MAT &&
                     is.hasItemMeta() &&
                     is.getItemMeta().hasDisplayName() &&
-                    "Shulker Head".equalsIgnoreCase(net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(is.getItemMeta().displayName())));
+                    is.getItemMeta().getDisplayName().contains("Shulker Head"));
 
             event.getDrops().clear();
             inv.clear();
@@ -169,7 +170,7 @@ public class GraveDeathListener implements Listener {
     }
 
     private boolean isValidItem(ItemStack item) {
-        return item != null && !item.getType().isAir();
+        return !de.niktr.graves.util.XGraveVersion.isAir(item);
     }
 
     private boolean containsSimilar(List<ItemStack> list, ItemStack item) {
@@ -186,7 +187,7 @@ public class GraveDeathListener implements Listener {
         World world = loc.getWorld();
         if (world == null) return loc;
 
-        int minHeight = world.getMinHeight();
+        int minHeight = de.niktr.graves.util.XGraveVersion.getMinHeight(world);
         int maxHeight = world.getMaxHeight();
 
         // If fell below void
@@ -215,7 +216,8 @@ public class GraveDeathListener implements Listener {
 
     public static int calculateTotalExperience(Player player) {
         try {
-            return player.calculateTotalExperiencePoints();
+            java.lang.reflect.Method m = player.getClass().getMethod("calculateTotalExperiencePoints");
+            return (Integer) m.invoke(player);
         } catch (Throwable t) {
             int level = player.getLevel();
             int exp = Math.round(player.getExpToLevel() * player.getExp());

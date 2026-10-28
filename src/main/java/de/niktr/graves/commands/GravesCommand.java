@@ -6,14 +6,10 @@ import de.niktr.graves.gui.GravesArchiveMenu;
 import de.niktr.graves.manager.GraveManager;
 import de.niktr.graves.model.Grave;
 import de.niktr.graves.storage.ArchivedGraveData;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
-import net.kyori.adventure.text.format.NamedTextColor;
+import de.niktr.graves.util.XGraveVersion;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -21,8 +17,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -39,9 +33,10 @@ public class GravesCommand implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 0) {
-            if (sender instanceof Player player) {
+            if (sender instanceof Player) {
+                Player player = (Player) sender;
                 List<Grave> graves = graveManager.getGravesByPlayer(player.getUniqueId());
                 if (!graves.isEmpty()) {
                     handleList(sender, new String[]{"list"});
@@ -58,93 +53,87 @@ public class GravesCommand implements CommandExecutor, TabCompleter {
         }
 
         String sub = args[0].toLowerCase(Locale.ROOT);
-        switch (sub) {
-            case "claim", "open", "pickup", "einsammeln" -> {
-                if (!(sender instanceof Player player)) {
-                    sender.sendMessage(GravesConfig.parseColor(config.getCmdPlayerOnly()));
-                    return true;
-                }
-                List<Grave> graves = graveManager.getGravesByPlayer(player.getUniqueId());
-                if (graves.isEmpty()) {
-                    player.sendMessage(GravesConfig.parseColor(config.getPrefixRaw() + "&#FF5555Du hast aktuell keine aktiven GrÃ¤ber."));
-                    return true;
-                }
-                Grave g = graves.get(0);
-                if (sub.equals("open")) {
-                    player.openInventory(g.getGui());
-                    try { player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 0.8f, 1.0f); } catch (Throwable ignored) {}
-                } else {
-                    boolean ok = graveManager.restoreActiveGraveToPlayer(g, player);
-                    if (ok) {
-                        player.sendMessage(GravesConfig.parseColor(config.getPrefixRaw() + "&#33FF33Grab-Inventar erfolgreich wiederhergestellt!"));
-                        try { player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f); } catch (Throwable ignored) {}
-                    }
-                }
+        if (sub.equals("claim") || sub.equals("open") || sub.equals("pickup") || sub.equals("einsammeln")) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage(GravesConfig.parseColor(config.getCmdPlayerOnly()));
                 return true;
             }
-            case "admin", "gui", "menu" -> {
-                if (!(sender instanceof Player player)) {
-                    sender.sendMessage(GravesConfig.parseColor(config.getCmdPlayerOnly()));
-                    return true;
+            Player player = (Player) sender;
+            List<Grave> graves = graveManager.getGravesByPlayer(player.getUniqueId());
+            if (graves.isEmpty()) {
+                player.sendMessage(GravesConfig.parseColor(config.getPrefixRaw() + "&#FF5555Du hast aktuell keine aktiven Gräber."));
+                return true;
+            }
+            Grave g = graves.get(0);
+            if (sub.equals("open")) {
+                player.openInventory(g.getGui());
+                XGraveVersion.playSound(player, "BLOCK_CHEST_OPEN", "CHEST_OPEN", 0.8f, 1.0f);
+            } else {
+                boolean ok = graveManager.restoreActiveGraveToPlayer(g, player);
+                if (ok) {
+                    player.sendMessage(GravesConfig.parseColor(config.getPrefixRaw() + "&#33FF33Grab-Inventar erfolgreich wiederhergestellt!"));
+                    XGraveVersion.playSound(player, "ENTITY_PLAYER_LEVELUP", "LEVEL_UP", 1.0f, 1.0f);
                 }
-                if (!hasPerm(player, "niktrick.graves.admin")) {
-                    player.sendMessage(GravesConfig.parseColor(config.getCmdNoPermission()));
-                    return true;
-                }
-                new GravesAdminMenu(plugin, player, graveManager, null).open();
+            }
+            return true;
+        } else if (sub.equals("admin") || sub.equals("gui") || sub.equals("menu")) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage(GravesConfig.parseColor(config.getCmdPlayerOnly()));
                 return true;
             }
-            case "history", "archive", "archiv" -> {
-                if (!(sender instanceof Player player)) {
-                    sender.sendMessage(GravesConfig.parseColor(config.getCmdPlayerOnly()));
-                    return true;
-                }
-                if (!hasPerm(player, "niktrick.graves.admin")) {
-                    player.sendMessage(GravesConfig.parseColor(config.getCmdNoPermission()));
-                    return true;
-                }
-                new GravesArchiveMenu(plugin, player, graveManager, null, 0).open();
+            Player player = (Player) sender;
+            if (!hasPerm(player, "niktrick.graves.admin")) {
+                player.sendMessage(GravesConfig.parseColor(config.getCmdNoPermission()));
                 return true;
             }
-            case "restore", "wiederherstellen" -> {
-                handleRestore(sender, args);
+            new GravesAdminMenu(plugin, player, graveManager, null).open();
+            return true;
+        } else if (sub.equals("history") || sub.equals("archive") || sub.equals("archiv")) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage(GravesConfig.parseColor(config.getCmdPlayerOnly()));
                 return true;
             }
-            case "reload" -> {
-                if (!hasPerm(sender, "niktrick.graves.admin", "niktrick.graves.reload")) {
-                    sender.sendMessage(GravesConfig.parseColor(config.getCmdNoPermission()));
-                    return true;
-                }
-                config.load();
-                sender.sendMessage(GravesConfig.parseColor(config.getReloadSuccess()));
+            Player player = (Player) sender;
+            if (!hasPerm(player, "niktrick.graves.admin")) {
+                player.sendMessage(GravesConfig.parseColor(config.getCmdNoPermission()));
                 return true;
             }
-            case "list" -> {
-                handleList(sender, args);
+            new GravesArchiveMenu(plugin, player, graveManager, null, 0).open();
+            return true;
+        } else if (sub.equals("restore") || sub.equals("wiederherstellen")) {
+            handleRestore(sender, args);
+            return true;
+        } else if (sub.equals("reload")) {
+            if (!hasPerm(sender, "niktrick.graves.admin", "niktrick.graves.reload")) {
+                sender.sendMessage(GravesConfig.parseColor(config.getCmdNoPermission()));
                 return true;
             }
-            case "tp" -> {
-                handleTp(sender, args);
-                return true;
-            }
-            default -> {
-                sender.sendMessage(GravesConfig.parseColor(config.getCmdInvalidCommand()));
-                return true;
-            }
+            config.load();
+            sender.sendMessage(GravesConfig.parseColor(config.getReloadSuccess()));
+            return true;
+        } else if (sub.equals("list")) {
+            handleList(sender, args);
+            return true;
+        } else if (sub.equals("tp")) {
+            handleTp(sender, args);
+            return true;
+        } else {
+            sender.sendMessage(GravesConfig.parseColor(config.getCmdInvalidCommand()));
+            return true;
         }
     }
 
     private void sendHelp(CommandSender sender) {
-        sender.sendMessage(GravesConfig.parseColor("<gradient:#FF5555:#FFAA00><b>BorderMC GrÃ¤ber</b></gradient> <#FFAA00>Hilfe"));
-        sender.sendMessage(GravesConfig.parseColor(" <#FFAA00>âž¤ <white>/graves list <#DDDDDD>| <#FFAAFF>Listet deine GrÃ¤ber auf"));
-        sender.sendMessage(GravesConfig.parseColor(" <#FFAA00>âž¤ <white>/graves claim <#DDDDDD>| <#FFAAFF>Sammelt dein Grab-Inventar ein"));
-        sender.sendMessage(GravesConfig.parseColor(" <#FFAA00>âž¤ <white>/graves open <#DDDDDD>| <#FFAAFF>Ã–ffnet dein Grab-Inventar"));
-        sender.sendMessage(GravesConfig.parseColor(" <#FFAA00>âž¤ <white>/graves tp <#DDDDDD>| <#FFAAFF>Teleportiert zum letzten Grab"));
+        sender.sendMessage(GravesConfig.parseColor("&6&lniktrick-graves &8• &eHilfe"));
+        sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves list &8| &bListet deine Gräber auf"));
+        sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves claim &8| &bSammelt dein Grab-Inventar ein"));
+        sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves open &8| &bÖffnet dein Grab-Inventar"));
+        sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves tp &8| &bTeleportiert zum letzten Grab"));
         if (hasPerm(sender, "niktrick.graves.admin")) {
-            sender.sendMessage(GravesConfig.parseColor(" <#FFAA00>âž¤ <white>/graves admin <#DDDDDD>| <#FFAAFF>Admin-MenÃ¼ & GrÃ¤ber-Einstellungen"));
-            sender.sendMessage(GravesConfig.parseColor(" <#FFAA00>âž¤ <white>/graves history <#DDDDDD>| <#FFAAFF>Archiv aller abgelaufenen GrÃ¤ber"));
-            sender.sendMessage(GravesConfig.parseColor(" <#FFAA00>âž¤ <white>/graves restore <spieler> <#DDDDDD>| <#FFAAFF>Grab-Inventar wiederherstellen"));
-            sender.sendMessage(GravesConfig.parseColor(" <#FFAA00>âž¤ <white>/graves reload <#DDDDDD>| <#FFAAFF>Konfiguration neu laden"));
+            sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves admin &8| &bAdmin-Menü & Gräber-Einstellungen"));
+            sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves history &8| &bArchiv aller abgelaufenen Gräber"));
+            sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves restore <spieler> &8| &bGrab-Inventar wiederherstellen"));
+            sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves reload &8| &bKonfiguration neu laden"));
         }
     }
 
@@ -171,9 +160,7 @@ public class GravesCommand implements CommandExecutor, TabCompleter {
                 if (ok) {
                     sender.sendMessage(GravesConfig.parseColor(config.getPrefixRaw() + "&#33FF33Aktives Grab-Inventar erfolgreich an &f" + targetPlayer.getName() + " &#33FF33wiederhergestellt!"));
                     targetPlayer.sendMessage(GravesConfig.parseColor(config.getPrefixRaw() + "&#33FF33Dein Grab-Inventar wurde von einem Admin wiederhergestellt!"));
-                    try {
-                        targetPlayer.playSound(targetPlayer.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-                    } catch (Throwable ignored) {}
+                    XGraveVersion.playSound(targetPlayer, "ENTITY_PLAYER_LEVELUP", "LEVEL_UP", 1.0f, 1.0f);
                     return;
                 }
             }
@@ -184,12 +171,11 @@ public class GravesCommand implements CommandExecutor, TabCompleter {
         if (targetPlayer != null) {
             List<ArchivedGraveData> list = graveManager.getArchiveStorage().getArchivedGravesForPlayer(targetPlayer.getUniqueId());
             if (!list.isEmpty()) {
-                targetData = list.get(0); // Neuestes Grab
+                targetData = list.get(0);
             }
         } else {
             targetData = graveManager.getArchiveStorage().getArchivedGrave(targetStr);
             if (targetData == null) {
-                // Suche nach Offline-Spieler Namen
                 for (ArchivedGraveData d : graveManager.getArchiveStorage().getArchiveList()) {
                     if (d.getPlayerName().equalsIgnoreCase(targetStr)) {
                         targetData = d;
@@ -200,7 +186,7 @@ public class GravesCommand implements CommandExecutor, TabCompleter {
         }
 
         if (targetData == null) {
-            sender.sendMessage(GravesConfig.parseColor(config.getPrefixRaw() + "&#FF5555Kein aktives oder archiviertes Grab fÃ¼r '" + targetStr + "' gefunden!"));
+            sender.sendMessage(GravesConfig.parseColor(config.getPrefixRaw() + "&#FF5555Kein aktives oder archiviertes Grab für '" + targetStr + "' gefunden!"));
             return;
         }
 
@@ -209,9 +195,7 @@ public class GravesCommand implements CommandExecutor, TabCompleter {
             if (ok) {
                 sender.sendMessage(GravesConfig.parseColor(config.getPrefixRaw() + "&#33FF33Grab-Inventar erfolgreich an &f" + targetPlayer.getName() + " &#33FF33wiederhergestellt!"));
                 targetPlayer.sendMessage(GravesConfig.parseColor(config.getPrefixRaw() + "&#33FF33Dein abgelaufenes Grab-Inventar wurde von einem Admin wiederhergestellt!"));
-                try {
-                    targetPlayer.playSound(targetPlayer.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-                } catch (Throwable ignored) {}
+                XGraveVersion.playSound(targetPlayer, "ENTITY_PLAYER_LEVELUP", "LEVEL_UP", 1.0f, 1.0f);
             } else {
                 sender.sendMessage(GravesConfig.parseColor(config.getPrefixRaw() + "&#FF3333Fehler bei der Wiederherstellung!"));
             }
@@ -244,10 +228,11 @@ public class GravesCommand implements CommandExecutor, TabCompleter {
                 }
             }
         } else {
-            if (!(sender instanceof Player player)) {
+            if (!(sender instanceof Player)) {
                 sender.sendMessage(GravesConfig.parseColor(config.getCmdPlayerOnly()));
                 return;
             }
+            Player player = (Player) sender;
             if (!hasPerm(sender, "niktrick.graves.list")) {
                 sender.sendMessage(GravesConfig.parseColor(config.getCmdNoPermission()));
                 return;
@@ -276,18 +261,6 @@ public class GravesCommand implements CommandExecutor, TabCompleter {
 
             String tpCmd = "/graves tp " + worldName + " " + x + " " + y + " " + z;
 
-            Component claimBtn = GravesConfig.parseColor("&#33FF33[Claim] ")
-                    .clickEvent(ClickEvent.runCommand("/graves claim"))
-                    .hoverEvent(HoverEvent.showText(Component.text("Klicke hier, um alle GegenstÃ¤nde sofort einzusammeln", NamedTextColor.GREEN)));
-
-            Component openBtn = GravesConfig.parseColor("&#FFAA00[Ã–ffnen] ")
-                    .clickEvent(ClickEvent.runCommand("/graves open"))
-                    .hoverEvent(HoverEvent.showText(Component.text("Klicke hier, um das Grab-Inventar zu Ã¶ffnen", NamedTextColor.GOLD)));
-
-            Component tpBtn = GravesConfig.parseColor("&#FF5555[TP] ")
-                    .clickEvent(ClickEvent.runCommand(tpCmd))
-                    .hoverEvent(HoverEvent.showText(Component.text("Klicke hier, um dich zum Grab zu teleportieren (" + worldDisplay + " " + x + ", " + y + ", " + z + ")", NamedTextColor.LIGHT_PURPLE)));
-
             String lineText = config.getGraveListFormat()
                     .replace("[TP] ", "")
                     .replace("[TP]", "")
@@ -298,16 +271,16 @@ public class GravesCommand implements CommandExecutor, TabCompleter {
                     .replace("%z%", String.valueOf(z))
                     .replace("%time%", timeStr);
 
-            Component textComp = GravesConfig.parseColor(lineText);
-            sender.sendMessage(claimBtn.append(openBtn).append(tpBtn).append(textComp));
+            sender.sendMessage(GravesConfig.parseColor("&a[Claim] &6[Öffnen] &c[TP: " + tpCmd + "] &f" + lineText));
         }
     }
 
     private void handleTp(CommandSender sender, String[] args) {
-        if (!(sender instanceof Player player)) {
+        if (!(sender instanceof Player)) {
             sender.sendMessage(GravesConfig.parseColor(config.getCmdPlayerOnly()));
             return;
         }
+        Player player = (Player) sender;
 
         if (!hasPerm(player, "niktrick.graves.tp")) {
             player.sendMessage(GravesConfig.parseColor(config.getCmdNoPermission()));
@@ -325,7 +298,7 @@ public class GravesCommand implements CommandExecutor, TabCompleter {
                 double y = Double.parseDouble(args[3]);
                 double z = Double.parseDouble(args[4]);
                 Location target = new Location(world, x + 0.5, y + 0.1, z + 0.5, player.getLocation().getYaw(), player.getLocation().getPitch());
-                player.teleportAsync(target);
+                player.teleport(target);
                 player.sendMessage(GravesConfig.parseColor(config.getPrefixRaw() + "&#FFAAFFTeleportiert zu &f" + config.getWorldDisplayName(world.getName()) + " " + (int) x + ", " + (int) y + ", " + (int) z));
             } catch (Exception ex) {
                 player.sendMessage(GravesConfig.parseColor(config.getCmdInvalidCommand()));
@@ -341,7 +314,7 @@ public class GravesCommand implements CommandExecutor, TabCompleter {
 
         Grave latest = graves.get(0);
         Location loc = latest.getLocation().clone().add(0.5, 0.1, 0.5);
-        player.teleportAsync(loc);
+        player.teleport(loc);
         player.sendMessage(GravesConfig.parseColor(config.getPrefixRaw() + "&#FFAAFFTeleportiert zu deinem letzten Grab!"));
     }
 
@@ -354,7 +327,7 @@ public class GravesCommand implements CommandExecutor, TabCompleter {
     }
 
     private boolean hasPerm(CommandSender sender, String... perms) {
-        if (sender.isOp() || sender.hasPermission("bordermc.admin")) return true;
+        if (sender.isOp() || sender.hasPermission("bordermc.admin") || sender.hasPermission("niktrick.admin")) return true;
         for (String p : perms) {
             if (sender.hasPermission(p)) return true;
         }
@@ -362,9 +335,9 @@ public class GravesCommand implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            List<String> list = new ArrayList<>(List.of("help", "list", "claim", "open", "tp"));
+            List<String> list = new ArrayList<String>(Arrays.asList("help", "list", "claim", "open", "tp"));
             if (hasPerm(sender, "niktrick.graves.admin")) {
                 list.add("admin");
                 list.add("history");
@@ -374,7 +347,7 @@ public class GravesCommand implements CommandExecutor, TabCompleter {
             return filterPrefix(list, args[0]);
         }
         if (args.length == 2 && (args[0].equalsIgnoreCase("list") || args[0].equalsIgnoreCase("restore"))) {
-            List<String> names = new ArrayList<>();
+            List<String> names = new ArrayList<String>();
             for (Player p : Bukkit.getOnlinePlayers()) {
                 names.add(p.getName());
             }
@@ -384,7 +357,7 @@ public class GravesCommand implements CommandExecutor, TabCompleter {
     }
 
     private List<String> filterPrefix(Collection<String> list, String prefix) {
-        List<String> result = new ArrayList<>();
+        List<String> result = new ArrayList<String>();
         String lower = prefix.toLowerCase(Locale.ROOT);
         for (String s : list) {
             if (s.toLowerCase(Locale.ROOT).startsWith(lower)) {
@@ -394,4 +367,3 @@ public class GravesCommand implements CommandExecutor, TabCompleter {
         return result;
     }
 }
-

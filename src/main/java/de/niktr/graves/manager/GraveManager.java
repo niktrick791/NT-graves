@@ -133,7 +133,7 @@ public class GraveManager {
             World world = dropLoc.getWorld();
             if (world != null) {
                 for (ItemStack is : itemsSnapshot) {
-                    if (is != null && !is.getType().isAir()) {
+                    if (!de.niktr.graves.util.XGraveVersion.isAir(is)) {
                         Item itemDrop = world.dropItem(dropLoc, is);
                         if (config.isDroppedItemVelocity()) {
                             Vector vel = new Vector(
@@ -232,7 +232,7 @@ public class GraveManager {
         }
 
         ItemStack[] contents = grave.getGui().getContents();
-        var inv = player.getInventory();
+        org.bukkit.inventory.PlayerInventory inv = player.getInventory();
 
         // 0. Remove any Shulker Head on player
         if (isShulkerHead(inv.getHelmet())) {
@@ -242,7 +242,7 @@ public class GraveManager {
         // 1. Auto equip armor if slots are free
         for (int i = 0; i < contents.length; i++) {
             ItemStack item = contents[i];
-            if (item == null || item.getType().isAir()) continue;
+            if (de.niktr.graves.util.XGraveVersion.isAir(item)) continue;
 
             if (isShulkerHead(item)) {
                 contents[i] = null;
@@ -268,7 +268,7 @@ public class GraveManager {
         // 2. Add remaining items
         for (int i = 0; i < contents.length; i++) {
             ItemStack item = contents[i];
-            if (item == null || item.getType().isAir()) continue;
+            if (de.niktr.graves.util.XGraveVersion.isAir(item)) continue;
             if (isShulkerHead(item)) continue;
 
             HashMap<Integer, ItemStack> leftover = inv.addItem(item);
@@ -291,10 +291,10 @@ public class GraveManager {
     }
 
     public static boolean isShulkerHead(ItemStack is) {
-        if (is == null || is.getType() != org.bukkit.Material.PLAYER_HEAD) return false;
+        if (is == null || is.getType() != de.niktr.graves.util.XGraveVersion.SKULL_MAT) return false;
         if (is.hasItemMeta() && is.getItemMeta().hasDisplayName()) {
-            String name = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(is.getItemMeta().displayName());
-            if ("Shulker Head".equalsIgnoreCase(name)) return true;
+            String name = is.getItemMeta().getDisplayName();
+            if (name != null && name.contains("Shulker Head")) return true;
         }
         return false;
     }

@@ -8,6 +8,7 @@ import de.niktr.graves.manager.GraveManager;
 import de.niktr.graves.storage.GraveArchiveStorage;
 import de.niktr.graves.storage.GraveStorage;
 import org.bukkit.Bukkit;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class NiktrickGravesPlugin extends JavaPlugin {
@@ -42,34 +43,40 @@ public class NiktrickGravesPlugin extends JavaPlugin {
 
         // Register command
         GravesCommand cmd = new GravesCommand(this, graveManager);
-        var command = getCommand("graves");
+        PluginCommand command = getCommand("graves");
         if (command != null) {
             command.setExecutor(cmd);
             command.setTabCompleter(cmd);
         }
 
         // Register 1-second ticker for hologram countdown & rotation
-        Bukkit.getScheduler().runTaskTimer(this, () -> {
-            try {
-                graveManager.tick();
-            } catch (Throwable t) {
-                getLogger().warning("[niktrick-graves] Fehler im Grave-Tick: " + t.getMessage());
+        Bukkit.getScheduler().runTaskTimer(this, new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    graveManager.tick();
+                } catch (Throwable t) {
+                    getLogger().warning("[niktrick-graves] Fehler im Grave-Tick: " + t.getMessage());
+                }
             }
         }, 20L, 20L);
 
         // Register auto-save task
         if (gravesConfig.isSaveGravesEnabled() && gravesConfig.getAutoSaveSeconds() > 0) {
             long saveTicks = gravesConfig.getAutoSaveSeconds() * 20L;
-            Bukkit.getScheduler().runTaskTimer(this, () -> {
-                try {
-                    graveManager.saveAll();
-                } catch (Throwable t) {
-                    getLogger().warning("[niktrick-graves] Fehler beim Auto-Save: " + t.getMessage());
+            Bukkit.getScheduler().runTaskTimer(this, new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        graveManager.saveAll();
+                    } catch (Throwable t) {
+                        getLogger().warning("[niktrick-graves] Fehler beim Auto-Save: " + t.getMessage());
+                    }
                 }
             }, saveTicks, saveTicks);
         }
 
-        getLogger().info("niktrick-graves v" + getPluginMeta().getVersion() + " successfully enabled!");
+        getLogger().info("niktrick-graves v" + getDescription().getVersion() + " successfully enabled (Cross-version 1.8 - 1.21.4+)!");
     }
 
     @Override

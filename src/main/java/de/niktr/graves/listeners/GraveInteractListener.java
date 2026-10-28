@@ -218,7 +218,8 @@ public class GraveInteractListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (!(event.getPlayer() instanceof Player player)) return;
+        if (!(event.getPlayer() instanceof Player)) return;
+        Player player = (Player) event.getPlayer();
 
         for (Grave grave : graveManager.getAllGraves()) {
             if (grave.isRemoved()) continue;
@@ -245,8 +246,12 @@ public class GraveInteractListener implements Listener {
         Grave grave = graveManager.getGraveByEntity(event.getEntity());
         if (grave != null) {
             event.setCancelled(true);
-            if (event instanceof EntityDamageByEntityEvent edbe && edbe.getDamager() instanceof Player player) {
-                handleInteraction(player, grave, player.isSneaking());
+            if (event instanceof EntityDamageByEntityEvent) {
+                EntityDamageByEntityEvent edbe = (EntityDamageByEntityEvent) event;
+                if (edbe.getDamager() instanceof Player) {
+                    Player player = (Player) edbe.getDamager();
+                    handleInteraction(player, grave, player.isSneaking());
+                }
             }
         }
     }

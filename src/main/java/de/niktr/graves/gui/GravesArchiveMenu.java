@@ -1,22 +1,22 @@
 package de.niktr.graves.gui;
 
-import de.niktr.graves.util.Menu;
-import de.niktr.graves.util.ItemBuilder;
 import de.niktr.graves.config.GravesConfig;
 import de.niktr.graves.manager.GraveManager;
 import de.niktr.graves.storage.ArchivedGraveData;
 import de.niktr.graves.storage.GraveStorage;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import de.niktr.graves.util.ItemBuilder;
+import de.niktr.graves.util.Menu;
+import de.niktr.graves.util.XGraveVersion;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -34,8 +34,8 @@ public class GravesArchiveMenu extends Menu<Plugin> {
     }
 
     @Override
-    public Component title() {
-        return Component.text("Grab-Archiv \u2022 Seite " + (page + 1), NamedTextColor.GOLD);
+    public String title() {
+        return "&6Grab-Archiv &8• &7Seite " + (page + 1);
     }
 
     @Override
@@ -55,60 +55,53 @@ public class GravesArchiveMenu extends Menu<Plugin> {
 
         int slot = 9;
         for (int i = startIndex; i < endIndex; i++) {
-            ArchivedGraveData data = archive.get(i);
+            final ArchivedGraveData data = archive.get(i);
             String dateStr = DATE_FORMAT.format(new Date(data.getDeathTime()));
             ItemStack[] items = GraveStorage.itemsFromBase64(data.getItems());
             int itemCount = 0;
             for (ItemStack it : items) {
-                if (it != null && !it.getType().isAir()) itemCount += it.getAmount();
+                if (!XGraveVersion.isAir(it)) itemCount += it.getAmount();
             }
 
-            Material icon = data.isRestored() ? Material.MINECART : Material.CHEST_MINECART;
+            Material icon = data.isRestored()
+                    ? XGraveVersion.safeMaterial("MINECART", "MINECART", Material.MINECART)
+                    : XGraveVersion.safeMaterial("CHEST_MINECART", "STORAGE_MINECART", Material.MINECART);
 
             ItemStack displayItem = new ItemBuilder(icon)
-                    .name(Component.text(data.getPlayerName(), NamedTextColor.GOLD)
-                            .append(Component.text(" \u2022 " + dateStr, NamedTextColor.GRAY)))
-                    .lore(List.of(
-                            Component.text("Grund: ", NamedTextColor.GRAY)
-                                    .append(Component.text(data.getReason(), NamedTextColor.YELLOW)),
-                            Component.text("Ort: ", NamedTextColor.GRAY)
-                                    .append(Component.text(data.getLocation(), NamedTextColor.WHITE)),
-                            Component.text("Items: ", NamedTextColor.GRAY)
-                                    .append(Component.text(itemCount + " Gegenst\u00e4nde", NamedTextColor.GREEN)),
-                            Component.text("Erfahrung: ", NamedTextColor.GRAY)
-                                    .append(Component.text(data.getXp() + " XP", NamedTextColor.AQUA)),
-                            Component.text("Status: ", NamedTextColor.GRAY)
-                                    .append(data.isRestored()
-                                            ? Component.text("Wiederhergestellt", NamedTextColor.GREEN)
-                                            : Component.text("Nicht wiederhergestellt", NamedTextColor.RED)),
-                            Component.empty(),
-                            Component.text("\u25b6 Linksklick: ", NamedTextColor.GREEN)
-                                    .append(Component.text("Dem Spieler wiederherstellen", NamedTextColor.GREEN)),
-                            Component.text("\u25b6 Rechtsklick: ", NamedTextColor.GOLD)
-                                    .append(Component.text("Inventar ansehen & Items nehmen", NamedTextColor.YELLOW))
+                    .name("&6" + data.getPlayerName() + " &8• &7" + dateStr)
+                    .lore(Arrays.asList(
+                            "&7Grund: &e" + data.getReason(),
+                            "&7Ort: &f" + data.getLocation(),
+                            "&7Items: &a" + itemCount + " Gegenstände",
+                            "&7Erfahrung: &b" + data.getXp() + " XP",
+                            "&7Status: " + (data.isRestored() ? "&aWiederhergestellt" : "&cNicht wiederhergestellt"),
+                            "",
+                            "&a▶ Linksklick: &aDem Spieler wiederherstellen",
+                            "&e▶ Rechtsklick: &eInventar ansehen & Items nehmen"
                     ))
                     .build();
 
-            set(slot, displayItem, e -> {
-                if (e.isRightClick()) {
-                    openArchivedInventory(data);
-                } else {
-                    Player target = Bukkit.getPlayer(data.getPlayerName());
-                    if (target != null && target.isOnline()) {
-                        boolean ok = graveManager.getArchiveStorage().restoreGraveToPlayer(data, target);
-                        if (ok) {
-                            player.sendMessage(GravesConfig.parseColor(graveManager.getConfig().getPrefixRaw() + "&#33FF33Inventar erfolgreich an &f" + target.getName() + " &#33FF33wiederhergestellt!"));
-                            target.sendMessage(GravesConfig.parseColor(graveManager.getConfig().getPrefixRaw() + "&#33FF33Ein Admin hat dein abgelaufenes Grab-Inventar wiederhergestellt!"));
-                            try {
-                                player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-                                target.playSound(target.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-                            } catch (Throwable ignored) {}
-                            refresh();
-                        } else {
-                            player.sendMessage(GravesConfig.parseColor(graveManager.getConfig().getPrefixRaw() + "&#FF3333Fehler bei der Wiederherstellung!"));
-                        }
+            set(slot, displayItem, new ClickAction() {
+                @Override
+                public void execute(InventoryClickEvent e) {
+                    if (e.isRightClick()) {
+                        openArchivedInventory(data);
                     } else {
-                        player.sendMessage(GravesConfig.parseColor(graveManager.getConfig().getPrefixRaw() + "&#FFAA00Spieler &f" + data.getPlayerName() + " &#FFAA00ist aktuell offline! Klicke mit Rechtsklick, um die Items anzusehen."));
+                        Player target = Bukkit.getPlayer(data.getPlayerName());
+                        if (target != null && target.isOnline()) {
+                            boolean ok = graveManager.getArchiveStorage().restoreGraveToPlayer(data, target);
+                            if (ok) {
+                                player.sendMessage(GravesConfig.parseColor(graveManager.getConfig().getPrefixRaw() + "&#33FF33Inventar erfolgreich an &f" + target.getName() + " &#33FF33wiederhergestellt!"));
+                                target.sendMessage(GravesConfig.parseColor(graveManager.getConfig().getPrefixRaw() + "&#33FF33Ein Admin hat dein abgelaufenes Grab-Inventar wiederhergestellt!"));
+                                XGraveVersion.playSound(player, "ENTITY_PLAYER_LEVELUP", "LEVEL_UP", 1.0f, 1.0f);
+                                XGraveVersion.playSound(target, "ENTITY_PLAYER_LEVELUP", "LEVEL_UP", 1.0f, 1.0f);
+                                refresh();
+                            } else {
+                                player.sendMessage(GravesConfig.parseColor(graveManager.getConfig().getPrefixRaw() + "&#FF3333Fehler bei der Wiederherstellung!"));
+                            }
+                        } else {
+                            player.sendMessage(GravesConfig.parseColor(graveManager.getConfig().getPrefixRaw() + "&#FFAA00Spieler &f" + data.getPlayerName() + " &#FFAA00ist aktuell offline! Klicke mit Rechtsklick, um die Items anzusehen."));
+                        }
                     }
                 }
             });
@@ -121,47 +114,62 @@ public class GravesArchiveMenu extends Menu<Plugin> {
         // Navigation
         if (page > 0) {
             set(45, new ItemBuilder(Material.ARROW)
-                    .name(Component.text("\u00ab Vorherige Seite", NamedTextColor.YELLOW))
-                    .build(), e -> openLater(new GravesArchiveMenu(plugin, player, graveManager, parent, page - 1)));
+                    .name("&e« Vorherige Seite")
+                    .build(), new ClickAction() {
+                @Override
+                public void execute(InventoryClickEvent e) {
+                    openLater(new GravesArchiveMenu(plugin, player, graveManager, parent, page - 1));
+                }
+            });
         }
 
-        set(49, new ItemBuilder(Material.BARRIER)
-                .name(Component.text("Zur\u00fcck zum Men\u00fc", NamedTextColor.RED))
-                .build(), e -> {
-            if (parent != null) parent.open();
-            else player.closeInventory();
+        Material barrierMat = XGraveVersion.safeMaterial("BARRIER", "REDSTONE_BLOCK", Material.REDSTONE_BLOCK);
+        set(49, new ItemBuilder(barrierMat)
+                .name("&cZurück zum Menü")
+                .build(), new ClickAction() {
+            @Override
+            public void execute(InventoryClickEvent e) {
+                if (parent != null) parent.open();
+                else player.closeInventory();
+            }
         });
 
         if (endIndex < archive.size()) {
             set(53, new ItemBuilder(Material.ARROW)
-                    .name(Component.text("N\u00e4chste Seite \u00bb", NamedTextColor.YELLOW))
-                    .build(), e -> openLater(new GravesArchiveMenu(plugin, player, graveManager, parent, page + 1)));
+                    .name("&eNächste Seite »")
+                    .build(), new ClickAction() {
+                @Override
+                public void execute(InventoryClickEvent e) {
+                    openLater(new GravesArchiveMenu(plugin, player, graveManager, parent, page + 1));
+                }
+            });
         }
     }
 
     private void openArchivedInventory(ArchivedGraveData data) {
-        String title = "Archiv \u2022 " + data.getPlayerName();
+        String title = "Archiv • " + data.getPlayerName();
         if (title.length() > 32) title = title.substring(0, 32);
 
-        Inventory inv = Bukkit.createInventory(null, 54, Component.text(title, NamedTextColor.GOLD));
+        Inventory inv = Bukkit.createInventory(null, 54, XGraveVersion.colorize("&6" + title));
         ItemStack[] items = GraveStorage.itemsFromBase64(data.getItems());
         for (int i = 0; i < Math.min(items.length, 54); i++) {
-            if (items[i] != null && !items[i].getType().isAir()) {
+            if (!XGraveVersion.isAir(items[i])) {
                 inv.setItem(i, items[i].clone());
             }
         }
         player.openInventory(inv);
-        try { player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 0.8f, 1.0f); } catch (Throwable ignored) {}
+        XGraveVersion.playSound(player, "BLOCK_CHEST_OPEN", "CHEST_OPEN", 0.8f, 1.0f);
     }
 
-    private void buildFrame() {
-        ItemStack frame = new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).name(Component.empty()).build();
-        for (int i = 0; i < 9; i++) set(i, frame);
-        for (int i = 45; i < 54; i++) set(i, frame);
+    @Override
+    protected void buildFrame() {
+        ItemStack frame = XGraveVersion.createPane(7, "GRAY_STAINED_GLASS_PANE");
+        ItemStack pane = new ItemBuilder(frame).name(" ").build();
+        for (int i = 0; i < 9; i++) set(i, pane);
+        for (int i = 45; i < 54; i++) set(i, pane);
         for (int row = 1; row < 5; row++) {
-            set(row * 9, frame);
-            set(row * 9 + 8, frame);
+            set(row * 9, pane);
+            set(row * 9 + 8, pane);
         }
     }
 }
-

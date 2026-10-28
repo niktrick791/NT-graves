@@ -1,7 +1,6 @@
 name: niktrick-graves
 version: '${version}'
 main: de.niktr.graves.NiktrickGravesPlugin
-api-version: '1.21'
 author: niktr
 description: Modern death chests & graves system with holograms, timeout protection, inventory restore and admin GUI.
 
