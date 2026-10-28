@@ -5,6 +5,8 @@
 [![Platform: Paper / Purpur / Spigot](https://img.shields.io/badge/Platform-Paper%20%7C%20Purpur%20%7C%20Spigot-green.svg)](#)
 [![Minecraft: 1.8.8 - 1.21.4+](https://img.shields.io/badge/Minecraft-1.8.8--1.21.4%2B-brightgreen.svg)](#)
 [![Java: 8+](https://img.shields.io/badge/Java-8%2B-red.svg)](#)
+[![Donate with PayPal](https://img.shields.io/badge/Donate-PayPal-00457C.svg?logo=paypal&logoColor=white)](https://paypal.me/niktrick)
+[![Support on Ko-fi](https://img.shields.io/badge/Support-Ko--fi-FF5E5B.svg?logo=kofi&logoColor=white)](https://ko-fi.com/niktrick)
 
 [🇩🇪 Zur deutschen Version wechseln](README_DE.md) | [🇬🇧 English Version](README.md)
 
@@ -92,3 +94,11 @@ save-graves:
 - **Minecraft**: 1.8.8, 1.12.2, 1.16.5, 1.17, 1.18, 1.19, 1.20, 1.21.x+
 - **Server Software**: Paper, Purpur, Spigot
 - **Java**: 8 to 25+ (compiled to Java 8 bytecode for maximum compatibility)
+---
+
+## 💖 Support & Donations
+
+If you enjoy this plugin, consider supporting future development:
+- [PayPal Donation](https://paypal.me/niktrick)
+- [Support on Ko-fi](https://ko-fi.com/niktrick)
+- Donations are voluntary and directly help maintain multi-version compatibility!
