@@ -22,6 +22,7 @@ public class GravesConfig {
     private FileConfiguration messages;
 
     // Config options
+    private String language = "en";
     private String prefixRaw;
     private String prefixComponent;
     private int despawnTimeSeconds;
@@ -95,8 +96,16 @@ public class GravesConfig {
         config = YamlConfiguration.loadConfiguration(configFile);
         messages = YamlConfiguration.loadConfiguration(messagesFile);
 
+        language = config.getString("language", "en").toLowerCase(Locale.ROOT);
+        if (!"de".equals(language) && !"en".equals(language)) {
+            language = "en";
+        }
+        boolean isGerman = "de".equals(language);
+
         // Parse config values
-        prefixRaw = config.getString("prefix", "<gradient:#FF5555:#FFAA00><b>BorderMC Gr\u00e4ber</b></gradient> &7\u00bb ");
+        prefixRaw = config.getString("prefix", isGerman
+                ? "<gradient:#FF5555:#FFAA00><b>BorderMC Gr\u00e4ber</b></gradient> &7\u00bb "
+                : "&8[&6niktrick-graves&8] &7");
         prefixComponent = parseColor(prefixRaw);
 
         despawnTimeSeconds = config.getInt("despawn-time-seconds", 1200);
@@ -163,30 +172,31 @@ public class GravesConfig {
         }
 
         helpLines = messages.getStringList("help");
-        guiName = messages.getString("gui-name", "&0%player%'s Grab");
-        unknownPlayer = messages.getString("unknown-player", "Unbekannt");
-        reloadSuccess = messages.getString("reload.success", "&#33FF33Plugin erfolgreich neu geladen!");
-        reloadFailed = messages.getString("reload.failed", "&#FF3333Fehler beim Neuladen der Konfiguration!");
-        interactNotYourGrave = messages.getString("interact.not-your-grave", "&#FFAAFFDu kannst nur dein eigenes Grab \u00f6ffnen!");
+        guiName = messages.getString("gui-name", isGerman ? "&0Grab von %player%" : "&0%player%'s Grave");
+        unknownPlayer = messages.getString("unknown-player", isGerman ? "Unbekannt" : "Unknown");
+        reloadSuccess = messages.getString("reload.success", isGerman ? "&#33FF33Plugin erfolgreich neu geladen!" : "&#33FF33Plugin reloaded successfully!");
+        reloadFailed = messages.getString("reload.failed", isGerman ? "&#FF3333Fehler beim Neuladen der Konfiguration!" : "&#FF3333Failed to reload configuration!");
+        interactNotYourGrave = messages.getString("interact.not-your-grave", isGerman ? "&#FFAAFFDu kannst nur dein eigenes Grab \u00f6ffnen!" : "&#FFAAFFYou can only open your own grave!");
 
         deathMessageEnabled = messages.getBoolean("death-message.enabled", false);
-        deathMessage = messages.getString("death-message.message", "&#FFAAAADu bist bei &f%world% %x%, %y%, %z% &#FFAAAAgestorben!");
+        deathMessage = messages.getString("death-message.message", isGerman ? "&#FFAAAADu bist bei &f%world% %x%, %y%, %z% &#FFAAAAgestorben!" : "&#FFAAAAYou died at &f%world% %x%, %y%, %z%&#FFAAAA!");
 
-        graveListHeader = messages.getString("grave-list.header", "&#FFAA00&l=== BORDERMC GR\u00c4BER ===");
+        graveListHeader = messages.getString("grave-list.header", isGerman ? "&#FFAA00&l=== GR\u00c4BER ===" : "&#FFAA00&l=== GRAVES ===");
         graveListFormat = messages.getString("grave-list.grave", "&#FF5555[TP] &#FFAAFF%player% &7- &#FFAAFF%world% %x%, %y%, %z% &7(%time%)");
-        graveListNoGraves = messages.getString("grave-list.no-graves", "&#FFAAFFKeine Gr\u00e4ber gefunden!");
+        graveListNoGraves = messages.getString("grave-list.no-graves", isGerman ? "&#FFAAFFKeine Gr\u00e4ber gefunden!" : "&#FFAAFFNo graves found!");
 
-        cmdInvalidValue = messages.getString("commands.invalid-value", "&#FF0000Ung\u00fcltiger Parameter: &#BB0000%value%");
-        cmdInvalidCommand = messages.getString("commands.invalid-command", "&#FF0000Ung\u00fcltiger Befehl oder Unterbefehl!");
-        cmdMissingArgument = messages.getString("commands.missing-argument", "&#FF0000Fehlendes Argument! Bitte gib einen Wert an.");
-        cmdNoPermission = messages.getString("commands.no-permission", "&#FF0000Du hast keine Berechtigung f\u00fcr diesen Befehl!");
-        cmdPlayerOnly = messages.getString("commands.player-only", "&#FF0000Dieser Befehl kann nur als Spieler ausgef\u00fchrt werden!");
-        cmdInvalidPlayer = messages.getString("commands.invalid-player", "&#FF0000Der Spieler &#BB0000%player% &#FF0000wurde nicht gefunden!");
+        cmdInvalidValue = messages.getString("commands.invalid-value", isGerman ? "&#FF0000Ung\u00fcltiger Parameter: &#BB0000%value%" : "&#FF0000Invalid parameter: &#BB0000%value%");
+        cmdInvalidCommand = messages.getString("commands.invalid-command", isGerman ? "&#FF0000Ung\u00fcltiger Befehl oder Unterbefehl!" : "&#FF0000Invalid command or subcommand!");
+        cmdMissingArgument = messages.getString("commands.missing-argument", isGerman ? "&#FF0000Fehlendes Argument! Bitte gib einen Wert an." : "&#FF0000Missing argument! Please specify a value.");
+        cmdNoPermission = messages.getString("commands.no-permission", isGerman ? "&#FF0000Du hast keine Berechtigung f\u00fcr diesen Befehl!" : "&#FF0000You do not have permission for this command!");
+        cmdPlayerOnly = messages.getString("commands.player-only", isGerman ? "&#FF0000Dieser Befehl kann nur als Spieler ausgef\u00fchrt werden!" : "&#FF0000This command can only be executed by a player!");
+        cmdInvalidPlayer = messages.getString("commands.invalid-player", isGerman ? "&#FF0000Der Spieler &#BB0000%player% &#FF0000wurde nicht gefunden!" : "&#FF0000Player &#BB0000%player% &#FF0000was not found!");
     }
 
     public synchronized void saveChanges() {
         if (config == null) return;
         try {
+            config.set("language", language);
             config.set("despawn-time-seconds", despawnTimeSeconds);
             config.set("drop-items", dropItems);
             config.set("dropped-item-velocity", droppedItemVelocity);
@@ -346,6 +356,24 @@ public class GravesConfig {
 
     public void setDespawnWhenEmpty(boolean despawnWhenEmpty) {
         this.despawnWhenEmpty = despawnWhenEmpty;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String lang) {
+        String clean = (lang != null && lang.equalsIgnoreCase("de")) ? "de" : "en";
+        this.language = clean;
+        if (config != null) {
+            config.set("language", clean);
+            saveChanges();
+            load();
+        }
+    }
+
+    public boolean isDe() {
+        return "de".equalsIgnoreCase(language);
     }
 
     public boolean isSaveGravesEnabled() {

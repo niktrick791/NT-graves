@@ -103,6 +103,27 @@ public class GravesCommand implements CommandExecutor, TabCompleter {
         } else if (sub.equals("restore") || sub.equals("wiederherstellen")) {
             handleRestore(sender, args);
             return true;
+        } else if (sub.equals("lang") || sub.equals("language")) {
+            if (!hasPerm(sender, "niktrick.graves.admin", "niktrick.graves.reload")) {
+                sender.sendMessage(GravesConfig.parseColor(config.getCmdNoPermission()));
+                return true;
+            }
+            if (args.length >= 2) {
+                String target = args[1].toLowerCase(Locale.ROOT);
+                if (target.equals("de") || target.equals("en")) {
+                    config.setLanguage(target);
+                    if ("de".equals(target)) {
+                        sender.sendMessage(GravesConfig.parseColor(config.getPrefixRaw() + "&#33FF33Sprache wurde auf &eDeutsch &#33FF33geändert."));
+                    } else {
+                        sender.sendMessage(GravesConfig.parseColor(config.getPrefixRaw() + "&#33FF33Language set to &eEnglish&#33FF33."));
+                    }
+                    return true;
+                }
+            }
+            sender.sendMessage(GravesConfig.parseColor(config.getPrefixRaw() + (config.isDe()
+                    ? "&7Aktuelle Sprache: &e" + config.getLanguage() + " &7(Verfügbar: &bde&7, &ben&7)"
+                    : "&7Current language: &e" + config.getLanguage() + " &7(Available: &bde&7, &ben&7)")));
+            return true;
         } else if (sub.equals("reload")) {
             if (!hasPerm(sender, "niktrick.graves.admin", "niktrick.graves.reload")) {
                 sender.sendMessage(GravesConfig.parseColor(config.getCmdNoPermission()));
@@ -124,16 +145,32 @@ public class GravesCommand implements CommandExecutor, TabCompleter {
     }
 
     private void sendHelp(CommandSender sender) {
-        sender.sendMessage(GravesConfig.parseColor("&6&lniktrick-graves &8• &eHilfe"));
-        sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves list &8| &bListet deine Gräber auf"));
-        sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves claim &8| &bSammelt dein Grab-Inventar ein"));
-        sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves open &8| &bÖffnet dein Grab-Inventar"));
-        sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves tp &8| &bTeleportiert zum letzten Grab"));
-        if (hasPerm(sender, "niktrick.graves.admin")) {
-            sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves admin &8| &bAdmin-Menü & Gräber-Einstellungen"));
-            sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves history &8| &bArchiv aller abgelaufenen Gräber"));
-            sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves restore <spieler> &8| &bGrab-Inventar wiederherstellen"));
-            sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves reload &8| &bKonfiguration neu laden"));
+        if (config.isDe()) {
+            sender.sendMessage(GravesConfig.parseColor("&6&lniktrick-graves &8• &eHilfe"));
+            sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves list &8| &bListet deine Gräber auf"));
+            sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves claim &8| &bSammelt dein Grab-Inventar ein"));
+            sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves open &8| &bÖffnet dein Grab-Inventar"));
+            sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves tp &8| &bTeleportiert zum letzten Grab"));
+            if (hasPerm(sender, "niktrick.graves.admin")) {
+                sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves admin &8| &bAdmin-Menü & Gräber-Einstellungen"));
+                sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves history &8| &bArchiv aller abgelaufenen Gräber"));
+                sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves restore <spieler> &8| &bGrab-Inventar wiederherstellen"));
+                sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves reload &8| &bKonfiguration neu laden"));
+                sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves lang <de|en> &8| &bSprache ändern (Global)"));
+            }
+        } else {
+            sender.sendMessage(GravesConfig.parseColor("&6&lniktrick-graves &8• &eHelp"));
+            sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves list &8| &bLists your active graves"));
+            sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves claim &8| &bCollects your grave inventory"));
+            sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves open &8| &bOpens your grave inventory"));
+            sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves tp &8| &bTeleports to your last grave"));
+            if (hasPerm(sender, "niktrick.graves.admin")) {
+                sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves admin &8| &bAdmin menu & grave settings"));
+                sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves history &8| &bArchive of expired/cleared graves"));
+                sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves restore <player> &8| &bRestore grave inventory"));
+                sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves reload &8| &bReloads configuration"));
+                sender.sendMessage(GravesConfig.parseColor(" &e➤ &f/graves lang <de|en> &8| &bChanges plugin language (Global)"));
+            }
         }
     }
 
@@ -343,8 +380,12 @@ public class GravesCommand implements CommandExecutor, TabCompleter {
                 list.add("history");
                 list.add("restore");
                 list.add("reload");
+                list.add("lang");
             }
             return filterPrefix(list, args[0]);
+        }
+        if (args.length == 2 && (args[0].equalsIgnoreCase("lang") || args[0].equalsIgnoreCase("language")) && hasPerm(sender, "niktrick.graves.admin")) {
+            return filterPrefix(Arrays.asList("de", "en"), args[1]);
         }
         if (args.length == 2 && (args[0].equalsIgnoreCase("list") || args[0].equalsIgnoreCase("restore"))) {
             List<String> names = new ArrayList<String>();
